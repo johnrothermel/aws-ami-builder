@@ -1,0 +1,45 @@
+{
+    "_comment": "Simple Packer Template",
+    "variables": {
+        "aws_region": "us-east-2",
+        "aws_ami_name": "jjr-ecs-helloworld-{{isotime \"2006-01-02_03-04-05\"}}"
+    },
+
+    "builders": [{
+        "type": "amazon-ebs",
+        "region": "{{user `aws_region`}}",
+        "instance_type": "t2.micro",
+        "ssh_username": "ec2-user",
+        "ami_name": "{{user `aws_ami_name`}}",
+        "ami_description": "JJR ECS Optimized Image",
+        "associate_public_ip_address": "false",
+        "source_ami_filter": {
+            "filters": {
+                "virtualization-type": "hvm",
+                "name": "amzn-ami-*-amazon-ecs-optimized",
+                "root-device-type": "ebs",
+                "owner-alias": "amazon"
+            },
+            "most_recent": true
+        },
+        "encrypt_boot": "true",
+        "run_tags": {
+            "Name": "jjr-ecs-helloworld-ami"
+        }
+    }],
+
+    "provisioners": [
+        {
+            "type": "shell",
+            "inline": [
+              "sleep 30",
+              "sudo yum update -y",
+              "sudo yum install java-1.8.0 java-1.8.0-openjdk-devel tomcat8-webapps -y",
+              "sudo yum remove java-1.7.0-openjdk  -y",
+              "sudo wget https://github.com/lobster1234/helloworld-api/files/953511/helloworld-api.war.gz -O /usr/share/tomcat8/webapps/helloworld-api.war.gz",
+              "sudo gunzip /usr/share/tomcat8/webapps/helloworld-api.war.gz",
+              "sudo chkconfig tomcat8 on"
+            ]
+        }
+    ]
+}
